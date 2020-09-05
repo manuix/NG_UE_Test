@@ -1,0 +1,13 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "4.25",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "NG_Test_MO",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
