@@ -11,15 +11,25 @@ class ANG_Test_MOHUD : public AHUD
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere)
+	class UFont* font;
+
 public:
 	ANG_Test_MOHUD();
+
 
 	/** Primary draw call for the HUD */
 	virtual void DrawHUD() override;
 
+protected:
+	virtual void BeginPlay() override;
+
 private:
 	/** Crosshair asset pointer */
 	class UTexture2D* CrosshairTex;
+	class ANG_Test_MOGameMode* GameMode;
+
+
 
 };
 

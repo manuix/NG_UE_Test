@@ -12,6 +12,10 @@
 #include "MotionControllerComponent.h"
 #include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
 
+#include "Cube.h"
+#include "Pyramid.h"
+#include "NG_Test_MOGameMode.h"
+
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 //////////////////////////////////////////////////////////////////////////
@@ -43,7 +47,7 @@ ANG_Test_MOCharacter::ANG_Test_MOCharacter()
 
 	// Create a gun mesh component
 	FP_Gun = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Gun"));
-	FP_Gun->SetOnlyOwnerSee(true);			// only the owning player will see this mesh
+	FP_Gun->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
 	FP_Gun->bCastDynamicShadow = false;
 	FP_Gun->CastShadow = false;
 	// FP_Gun->SetupAttachment(Mesh1P, TEXT("GripPoint"));
@@ -105,6 +109,66 @@ void ANG_Test_MOCharacter::BeginPlay()
 	}
 }
 
+void ANG_Test_MOCharacter::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+	CheckForCubes();
+}
+
+void ANG_Test_MOCharacter::CheckForCubes() {
+
+	FHitResult THit;
+
+	FVector start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector end = start + FirstPersonCameraComponent->GetForwardVector() * 10000;
+	FCollisionQueryParams CollisionParams;
+
+
+	GetWorld()->LineTraceSingleByChannel(THit, start, end, ECC_Visibility, CollisionParams);
+	// Am I looking at a cube?
+	ACube* hitCube = (Cast<ACube>(THit.Actor));
+	SetCubeImLookingAt(hitCube);
+
+}
+
+void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
+	/*
+	Need to check whether:
+		- I was looking at a cube
+			- If it's the same, do nothing
+			- If it's differenct, remove the highlight and change the cube
+		- If I'm looking at an existing cube, highlight it.
+	*/
+	if (CubeImLookingAt != nullptr) {
+		if (CubeImLookingAt != cube) {
+			CubeImLookingAt->AskSetHighlightGroup(false);
+		}
+	}
+	CubeImLookingAt = cube;
+	if (cube != nullptr) {
+		cube->AskSetHighlightGroup(true);
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(10, 1, FColor::Black, FString::Printf(TEXT("Looking at Cube at X: %i ; Y: %i | Is data ok? %s"),
+				cube->PyramidPosition.X,
+				cube->PyramidPosition.Y,
+				(cube->Pyramid->GetCubeAt(cube->PyramidPosition.X, cube->PyramidPosition.Y) == cube ? TEXT("true") : TEXT("false"))));
+		}
+	}
+}
+
+
+
+
+void ANG_Test_MOCharacter::ClickOnCube() {
+
+	if (CubeImLookingAt != nullptr) {
+		//TODO:
+		//save on score
+
+		GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt);
+		//CubeImLookingAt->AskExplodeCube();
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -118,7 +182,8 @@ void ANG_Test_MOCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	// Bind fire event
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ANG_Test_MOCharacter::OnFire);
+	//PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ANG_Test_MOCharacter::OnFire);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ANG_Test_MOCharacter::ClickOnCube);
 
 	// Enable touchscreen input
 	EnableTouchscreenMovement(PlayerInputComponent);
@@ -295,6 +360,6 @@ bool ANG_Test_MOCharacter::EnableTouchscreenMovement(class UInputComponent* Play
 		//PlayerInputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANG_Test_MOCharacter::TouchUpdate);
 		return true;
 	}
-	
+
 	return false;
 }
