@@ -12,6 +12,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 
 ANG_Test_MOHUD::ANG_Test_MOHUD()
 {
@@ -25,9 +26,10 @@ ANG_Test_MOHUD::ANG_Test_MOHUD()
 void ANG_Test_MOHUD::BeginPlay() {
 	Super::BeginPlay();
 
-	GameMode = GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>();
+
+	GameState = (AGameState*)UGameplayStatics::GetGameState(GetWorld());
 	if (GetWorld()->GetFirstPlayerController<APlayerController>()) {
-		player = GetWorld()->GetFirstPlayerController<APlayerController>()->GetPawn<ANG_Test_MOCharacter>();
+		player = UGameplayStatics::GetPlayerController(GetWorld(), 0)->PlayerState;
 	}
 	else if (GEngine) {
 		GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Red, "No player controller on world?");
@@ -54,13 +56,15 @@ void ANG_Test_MOHUD::DrawHUD()
 	Canvas->DrawItem(TileItem);
 
 	float GameOverSize = 3;
-	DrawText(GameMode->bGameOver() ? "Game Over!" : "", FLinearColor::Red, Center.X - (25 * GameOverSize), Center.Y - (25 * GameOverSize), nullptr, GameOverSize, false);
+	//TODO
+	//Notice GameOver!
+	//DrawText(GameMode->bGameOver() ? "Game Over!" : "", FLinearColor::Red, Center.X - (25 * GameOverSize), Center.Y - (25 * GameOverSize), nullptr, GameOverSize, false);
 
 
 	//DrawText(GetWorld->)
 	float scoreSize = 2;
 	if (player != nullptr)
-		DrawText(FString::Printf(TEXT("Score: %i"), (uint32)player->GetPlayerState()->GetScore()), FLinearColor::White, (25 * scoreSize), (25 * scoreSize), nullptr, scoreSize, false);
+		DrawText(FString::Printf(TEXT("Score: %i"), (uint32)player->GetScore()), FLinearColor::White, (25 * scoreSize), (25 * scoreSize), nullptr, scoreSize, false);
 	else {
 		DrawText("No player to show score of.", FLinearColor::White, (25 * scoreSize), (25 * scoreSize), nullptr, scoreSize, false);
 	}

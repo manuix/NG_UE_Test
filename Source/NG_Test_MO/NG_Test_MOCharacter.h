@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
+//#include "Net/UnrealNetwork.h"
+
 #include "NG_Test_MOCharacter.generated.h"
 
 class UInputComponent;
@@ -152,6 +155,9 @@ protected:
 	void SetCubeImLookingAt(ACube* cube);
 	void CheckForCubes();
 	void ClickOnCube();
+
+	UFUNCTION(Server, unreliable, WithValidation)
+	void Server_AskClickOnCube(ACube* cube);
 
 public:
 	virtual void Tick(float DeltaTime) override;

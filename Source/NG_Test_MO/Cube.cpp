@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Pyramid.h"
 #include "Cube.h"
+#include "Pyramid.h"
 #include "Materials/Material.h"
 
 // Sets default values
@@ -17,6 +17,8 @@ ACube::ACube()
 
 	color = 0;
 	Pyramid = nullptr;
+
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned
@@ -30,6 +32,10 @@ void ACube::BeginPlay()
 void ACube::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (GEngine) {
+		GEngine->AddOnScreenDebugMessage(123, 1, FColor::Cyan, FString::Printf(TEXT("Cube!")));
+	}
 
 }
 

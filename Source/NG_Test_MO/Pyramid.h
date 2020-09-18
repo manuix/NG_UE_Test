@@ -22,11 +22,11 @@ public:
 	// Sets default values for this actor's properties
 	APyramid();
 
-	UPROPERTY(EditAnywhere,Category = "PyramidSettings" )
+	UPROPERTY(EditAnywhere, Category = "PyramidSettings")
 	TSubclassOf<class ACube> CubeClass;
 	//UPROPERTY()
 	//UChildActorComponent* container;
-	
+
 	UPROPERTY(EditAnywhere, Category = "PyramidSettings")
 	uint8 Height;
 	FORCEINLINE bool bAnyCubeAlive() { return bIsAnyCubeAlive; };
@@ -36,15 +36,17 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	//TODO
 	//We need to pool dead Cubes
-	TArray<ACube*> cubesArray;
+	//UPROPERTY(Replicates or something)
+	UPROPERTY(Replicated)
+	TArray<ACube*> CubesArray;
 	TQueue<ACube*> deadCubes;
 
 	bool bIsAnyCubeAlive;
 
-	bool ISCoordinateWithinRange(int16 x, int16 y);
+	bool IsCoordinateWithinRange(int16 x, int16 y);
 	void RefreshCubesPositions();
 
 	//uint32 Fib(uint32 x);
@@ -56,12 +58,14 @@ public:
 	TArray<ACube*> GetTouchingCubes(ACube* cube);
 	TSet<ACube*> GetGroupCubes(uint8 x, uint8 y);
 	TSet<ACube*> GetGroupCubes(ACube* cube);
-	
+
 	//[deprecated]
 	uint16 GetPositionInArray(uint8 x, uint8 y);
 	ACube* GetCubeAt(uint8 x, uint8 y);
 	void SetCubeAt(uint8 x, uint8 y, ACube* cube);
 
+	UFUNCTION(Server, unreliable, WithValidation)
+	void Server_GeneratePyramid();
 
 	void GeneratePyramid();
 

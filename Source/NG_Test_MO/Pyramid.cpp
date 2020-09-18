@@ -4,6 +4,7 @@
 #include "Pyramid.h"
 #include "Cube.h"
 #include "Math/UnrealMathUtility.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APyramid::APyramid()
@@ -18,7 +19,8 @@ APyramid::APyramid()
 	//container = CreateDefaultSubobject<UChildActorComponent>(TEXT("Container"));
 
 	Height = 7;
-
+	SetReplicates(true);
+	bReplicates = true;
 
 }
 
@@ -27,14 +29,14 @@ void APyramid::BeginPlay()
 {
 	Super::BeginPlay();
 
-	cubesArray.Init(nullptr, Height * Height);
+	CubesArray.Init(nullptr, Height * Height);
 
 	GeneratePyramid();
 
 	if (GEngine) {
 
 		auto time = FDateTime::Now();
-		
+
 	}
 
 }
@@ -43,16 +45,18 @@ void APyramid::BeginPlay()
 void APyramid::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+		
 }
 
 UFUNCTION(CallInEditor, Category = "PyramidSettings")
 void APyramid::GeneratePyramid() {
+}
 
+bool APyramid::Server_GeneratePyramid_Validate() {
+	return true;
+}
+void APyramid::Server_GeneratePyramid_Implementation() {
 	bIsAnyCubeAlive = true;
-
-	//an array and stuff
-	//A for
 
 	for (uint8 y = 0; y < Height; y++)
 	{
@@ -61,46 +65,49 @@ void APyramid::GeneratePyramid() {
 			uint16 PositionInArray = GetPositionInArray(x * 2, y);
 			//TEXT("Cube(" + x + ";" + y + ")")
 			ACube* cube;
-			if (!deadCubes.IsEmpty()) {
-				deadCubes.Dequeue(cube);
-				//Init
+
+			cube = GetWorld()->SpawnActor<ACube>(CubeClass);
+			//Actualy Spawining it
+			if (cube != nullptr) {
+
+				cube->SetOwner(this);
+				cube->SetActorLabel(FString::Printf(TEXT("Cube %i | %i"), x * 2, y));
+				cube->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+				cube->SetActorRelativeLocation(GetActorLocation() + FVector(0, 110 * x + 55 * y, 110 * y), false, nullptr, ETeleportType::ResetPhysics);
+				/*if (GEngine)
+					GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Emerald, cube->GetName());*/
+				cube->PyramidPosition = FIntVector(x * 2, y, 0);
+				//???
+				//cube->Mesh->SetupAttachment(RootComponent);
+
+				//Locking the Y Position of the cubes
+				cube->Mesh->BodyInstance.bLockYTranslation = true;
+				cube->Mesh->BodyInstance.SetDOFLock(EDOFMode::SixDOF);
+
+				cube->SetColor(FMath::RandRange(0, 2));
+				//cube->SetColor(0);
+
+				cube->Pyramid = this;
+				cube->Init();
 			}
-			else {
-				cube = GetWorld()->SpawnActor<ACube>(CubeClass);
-				//Actualy Spawining it
-			}
-			cube->SetOwner(this);
-			cube->SetActorLabel(FString::Printf(TEXT("Cube %i | %i"), x * 2, y));
-			cube->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-			cube->SetActorRelativeLocation(GetActorLocation() + FVector(0, 110 * x + 55 * y, 110 * y), false, nullptr, ETeleportType::ResetPhysics);
-			/*if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Emerald, cube->GetName());*/
-			cube->PyramidPosition = FIntVector(x * 2, y, 0);
-			//???
-			//cube->Mesh->SetupAttachment(RootComponent);
 
-			//Locking the Y Position of the cubes
-			cube->Mesh->BodyInstance.bLockYTranslation = true;
-			cube->Mesh->BodyInstance.SetDOFLock(EDOFMode::SixDOF);
-
-			cube->SetColor(FMath::RandRange(0, 2));
-			//cube->SetColor(0);
-
-			cube->Pyramid = this;
-			cube->Init();
-
-			cubesArray[PositionInArray] = cube;
+			CubesArray[PositionInArray] = cube;
 
 		}
 
 	}
+}
 
+void APyramid::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APyramid, CubesArray);
 }
 
 //Can return -1 if out of range.
 uint16 APyramid::GetPositionInArray(uint8 x, uint8 y) {
 
-	if (!ISCoordinateWithinRange(x, y)) {
+	if (!IsCoordinateWithinRange(x, y)) {
 		//return -1;
 		throw std::out_of_range("Coordinates are out of range.");
 	}
@@ -119,19 +126,21 @@ uint16 APyramid::GetPositionInArray(uint8 x, uint8 y) {
 
 //Can return nullptr if out of range.
 ACube* APyramid::GetCubeAt(uint8 x, uint8 y) {
-	ACube* cube = nullptr;
 
-	if (!ISCoordinateWithinRange(x, y)) {
-		return cube;
+	int X = x;
+	int Y = y;
+	IsCoordinateWithinRange(X, Y);
+	if (!IsCoordinateWithinRange(X, Y)) {
+		return nullptr;
 	}
 
-	return cubesArray[GetPositionInArray(x, y)];
+	return CubesArray[GetPositionInArray(x, y)];
 }
 
 //Won't do anything if out of range. Sets the local Cubes position too.
 void APyramid::SetCubeAt(uint8 x, uint8 y, ACube* cube) {
-	if (ISCoordinateWithinRange(x, y)) {
-		cubesArray[GetPositionInArray(x, y)] = cube;
+	if (IsCoordinateWithinRange(x, y)) {
+		CubesArray[GetPositionInArray(x, y)] = cube;
 		if (cube != nullptr) {
 			cube->PyramidPosition = FIntVector(x, y, 0);
 			/*if (GEngine)
@@ -149,9 +158,9 @@ void APyramid::SetCubeAt(uint8 x, uint8 y, ACube* cube) {
 }
 
 
-bool APyramid::ISCoordinateWithinRange(int16 x, int16 y) {
+bool APyramid::IsCoordinateWithinRange(int16 x, int16 y) {
 	return
-		y < Height&&
+		y < Height &&
 		y >= 0 &&
 		x < (Height - y) * 2 - 1 &&
 		x >= 0
@@ -179,11 +188,13 @@ TArray<ACube*> APyramid::GetTouchingCubes(uint8 x, uint8 y) {
 }
 
 TArray<ACube*> APyramid::GetTouchingCubes(ACube* cube) {
+	if (cube == nullptr)
+		return TArray<ACube*>();
 	return GetTouchingCubes(cube->PyramidPosition.X, cube->PyramidPosition.Y);
 }
 
 TSet<ACube*> APyramid::GetGroupCubes(uint8 x, uint8 y) {
-	return GetGroupCubes(cubesArray[GetPositionInArray(x, y)]);
+	return GetGroupCubes(CubesArray[GetPositionInArray(x, y)]);
 }
 
 TSet<ACube*> APyramid::GetGroupCubes(ACube* cube) {

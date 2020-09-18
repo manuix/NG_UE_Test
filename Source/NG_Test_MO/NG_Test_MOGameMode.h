@@ -20,7 +20,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	class APyramid* Pyramid;
+	class TSubclassOf<class APyramid> BPPyramid;
+
+	void GeneratePyramid();
 
 };
 

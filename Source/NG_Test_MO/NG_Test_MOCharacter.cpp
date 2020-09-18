@@ -16,6 +16,7 @@
 #include "Pyramid.h"
 #include "GameFramework/PlayerState.h"
 #include "NG_Test_MOGameMode.h"
+//#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -87,6 +88,13 @@ ANG_Test_MOCharacter::ANG_Test_MOCharacter()
 
 	// Uncomment the following line to turn motion controllers on by default:
 	//bUsingMotionControllers = true;
+
+
+	//bReplicates = true;
+	SetReplicates(true);
+	SetReplicateMovement(true);
+
+
 }
 
 void ANG_Test_MOCharacter::BeginPlay()
@@ -169,13 +177,19 @@ void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
 //}
 
 
+bool ANG_Test_MOCharacter::Server_AskClickOnCube_Validate(ACube* cube) {
+	return true;
+}
+void ANG_Test_MOCharacter::Server_AskClickOnCube_Implementation(ACube* cube) {
+	
+}
 
 void ANG_Test_MOCharacter::ClickOnCube() {
 
 	if (CubeImLookingAt != nullptr) {
 		//Score handling should be on GameMode. But this works for now.
-		auto player = GetPlayerState();
-		player->SetScore(player->GetScore() + (GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt)));
+		Server_AskClickOnCube(CubeImLookingAt);
+		//GetPlayerState()->SetScore(GetPlayerState()->GetScore() + (GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt)));
 	}
 }
 
