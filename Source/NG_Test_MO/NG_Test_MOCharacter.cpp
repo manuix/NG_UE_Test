@@ -16,6 +16,7 @@
 #include "Pyramid.h"
 #include "GameFramework/PlayerState.h"
 #include "NG_Test_MOGameMode.h"
+#include "MyGameState.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -157,25 +158,23 @@ void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
 	}
 }
 
-//
-//uint32 ANG_Test_MOCharacter::GetScore() {
-//	return score;
-//}
-//void ANG_Test_MOCharacter::SetScore(uint32 newScore) {
-//	score = newScore;
-//}
-//uint32 ANG_Test_MOCharacter::AddScore(uint32 addScore) {
-//	return score += addScore;
-//}
+uint32 ANG_Test_MOCharacter::ExplodeCube(ACube* cube) {
+	if (cube == nullptr)
+		return 0;
+	
+	auto gameState = GetWorld()->GetGameState<AMyGameState>();
+	return gameState->Pyramid->ExplodeCube(cube);
 
-
+}
 
 void ANG_Test_MOCharacter::ClickOnCube() {
-
 	if (CubeImLookingAt != nullptr) {
-		//Score handling should be on GameMode. But this works for now.
+		//TODO: Done?
+		//Do this on the gameState or the gamemode. Prolly the gaememode, as it is single player.
+		//Nah, we doing it here, the server will also do it here.
 		auto player = GetPlayerState();
-		player->SetScore(player->GetScore() + (GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt)));
+		player->SetScore(player->GetScore() + ExplodeCube(CubeImLookingAt));
+
 	}
 }
 

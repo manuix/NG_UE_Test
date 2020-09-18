@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Pyramid.h"
 #include "Cube.h"
+#include "Pyramid.h"
 #include "Materials/Material.h"
 
 // Sets default values

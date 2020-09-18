@@ -10,15 +10,13 @@
  * 
  */
 UCLASS()
-class NG_TEST_MO_API AMyGameState : public AGameState
+class NG_TEST_MO_API AMyGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 	
 public:
 
-	//UPROPERTY(Replicated)
 	class APyramid* Pyramid;
-
-	uint8 turn;
+	bool bGameOver;
 
 };

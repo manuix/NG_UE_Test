@@ -9,16 +9,17 @@
 APyramid::APyramid()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	//Root = CreateDefaultSubobject<USceneComponent>("Root");
-	//Root = CreateDefaultSubobject<UStaticMeshComponent>("Root");
-	//RootComponent = Root;
+	PrimaryActorTick.bCanEverTick = false;
 
 	//container = CreateDefaultSubobject<UChildActorComponent>(TEXT("Container"));
 
+	ConstructorHelpers::FClassFinder<ACube> BPColoredCube(TEXT("/Game/Mine/MyBPClasses/BP_ColoredCube"));
+	CubeClass = BPColoredCube.Class;
 	Height = 7;
 
+	RootSceneComponent = CreateDefaultSubobject<USceneComponent>("Root Scene Component");
+	RootSceneComponent->SetMobility(EComponentMobility::Movable);
+	SetRootComponent(RootSceneComponent);
 
 }
 
@@ -27,15 +28,7 @@ void APyramid::BeginPlay()
 {
 	Super::BeginPlay();
 
-	cubesArray.Init(nullptr, Height * Height);
-
-	GeneratePyramid();
-
-	if (GEngine) {
-
-		auto time = FDateTime::Now();
-		
-	}
+	CubesArray.Init(nullptr, Height * Height);
 
 }
 
@@ -46,13 +39,14 @@ void APyramid::Tick(float DeltaTime)
 
 }
 
+
 UFUNCTION(CallInEditor, Category = "PyramidSettings")
 void APyramid::GeneratePyramid() {
 
-	bIsAnyCubeAlive = true;
+	/*if (GEngine)
+		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Emerald, "Generating pyramid!");*/
 
-	//an array and stuff
-	//A for
+	bAnyCubeAlive = true;
 
 	for (uint8 y = 0; y < Height; y++)
 	{
@@ -61,48 +55,44 @@ void APyramid::GeneratePyramid() {
 			uint16 PositionInArray = GetPositionInArray(x * 2, y);
 			//TEXT("Cube(" + x + ";" + y + ")")
 			ACube* cube;
-			if (!deadCubes.IsEmpty()) {
-				deadCubes.Dequeue(cube);
-				//Init
+
+			cube = GetWorld()->SpawnActor<ACube>(CubeClass);
+			//Actualy Spawining it
+			if (cube != nullptr) {
+
+				cube->SetOwner(this);
+				cube->SetActorLabel(FString::Printf(TEXT("Cube %i | %i"), x * 2, y));
+				cube->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+				cube->SetActorRelativeLocation(GetActorLocation() + FVector(0, 110 * x + 55 * y, 110 * y), false, nullptr, ETeleportType::ResetPhysics);
+				/*if (GEngine)
+					GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Emerald, cube->GetName());*/
+				cube->PyramidPosition = FIntVector(x * 2, y, 0);
+				//???
+				//cube->Mesh->SetupAttachment(RootComponent);
+
+				//Locking the Y Position of the cubes
+				cube->Mesh->BodyInstance.bLockYTranslation = true;
+				cube->Mesh->BodyInstance.SetDOFLock(EDOFMode::SixDOF);
+
+				cube->SetColor(FMath::RandRange(0, 2));
+				//cube->SetColor(0);
+
+				cube->Pyramid = this;
+				cube->Init();
 			}
-			else {
-				cube = GetWorld()->SpawnActor<ACube>(CubeClass);
-				//Actualy Spawining it
-			}
-			cube->SetOwner(this);
-			cube->SetActorLabel(FString::Printf(TEXT("Cube %i | %i"), x * 2, y));
-			cube->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-			cube->SetActorRelativeLocation(GetActorLocation() + FVector(0, 110 * x + 55 * y, 110 * y), false, nullptr, ETeleportType::ResetPhysics);
-			/*if (GEngine)
-				GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Emerald, cube->GetName());*/
-			cube->PyramidPosition = FIntVector(x * 2, y, 0);
-			//???
-			//cube->Mesh->SetupAttachment(RootComponent);
 
-			//Locking the Y Position of the cubes
-			cube->Mesh->BodyInstance.bLockYTranslation = true;
-			cube->Mesh->BodyInstance.SetDOFLock(EDOFMode::SixDOF);
-
-			cube->SetColor(FMath::RandRange(0, 2));
-			//cube->SetColor(0);
-
-			cube->Pyramid = this;
-			cube->Init();
-
-			cubesArray[PositionInArray] = cube;
+			CubesArray[PositionInArray] = cube;
 
 		}
 
 	}
-
 }
 
 //Can return -1 if out of range.
 uint16 APyramid::GetPositionInArray(uint8 x, uint8 y) {
 
-	if (!ISCoordinateWithinRange(x, y)) {
-		//return -1;
-		throw std::out_of_range("Coordinates are out of range.");
+	if (!IsCoordinateWithinRange(x, y)) {
+		return -1;
 	}
 
 	uint16 ret = 0;
@@ -119,19 +109,16 @@ uint16 APyramid::GetPositionInArray(uint8 x, uint8 y) {
 
 //Can return nullptr if out of range.
 ACube* APyramid::GetCubeAt(uint8 x, uint8 y) {
-	ACube* cube = nullptr;
+	if (!IsCoordinateWithinRange(x, y))
+		return nullptr;
 
-	if (!ISCoordinateWithinRange(x, y)) {
-		return cube;
-	}
-
-	return cubesArray[GetPositionInArray(x, y)];
+	return CubesArray[GetPositionInArray(x, y)];
 }
 
 //Won't do anything if out of range. Sets the local Cubes position too.
 void APyramid::SetCubeAt(uint8 x, uint8 y, ACube* cube) {
-	if (ISCoordinateWithinRange(x, y)) {
-		cubesArray[GetPositionInArray(x, y)] = cube;
+	if (IsCoordinateWithinRange(x, y)) {
+		CubesArray[GetPositionInArray(x, y)] = cube;
 		if (cube != nullptr) {
 			cube->PyramidPosition = FIntVector(x, y, 0);
 			/*if (GEngine)
@@ -149,7 +136,8 @@ void APyramid::SetCubeAt(uint8 x, uint8 y, ACube* cube) {
 }
 
 
-bool APyramid::ISCoordinateWithinRange(int16 x, int16 y) {
+bool APyramid::IsCoordinateWithinRange(int16 x, int16 y) {
+	//return false;
 	return
 		y < Height&&
 		y >= 0 &&
@@ -179,19 +167,23 @@ TArray<ACube*> APyramid::GetTouchingCubes(uint8 x, uint8 y) {
 }
 
 TArray<ACube*> APyramid::GetTouchingCubes(ACube* cube) {
+	if (cube == nullptr)
+		return TArray<ACube*>();
 	return GetTouchingCubes(cube->PyramidPosition.X, cube->PyramidPosition.Y);
 }
 
 TSet<ACube*> APyramid::GetGroupCubes(uint8 x, uint8 y) {
-	return GetGroupCubes(cubesArray[GetPositionInArray(x, y)]);
+	return GetGroupCubes(CubesArray[GetPositionInArray(x, y)]);
 }
 
 TSet<ACube*> APyramid::GetGroupCubes(ACube* cube) {
 
 	TSet<ACube*> groupCubes;
 
-	if (cube == nullptr)
+	if (cube == nullptr) {
+		groupCubes.Empty(0);
 		return groupCubes;
+	}
 
 	//sameColorNeighborCubes.Append(Pyramid->GetNeighboringCubes(this));
 	TSet<ACube*> checkedCubes;
@@ -244,9 +236,11 @@ uint32 APyramid::ExplodeCube(ACube* cube) {
 	}*/
 	TSet<ACube*> cubes = GetGroupCubes(cube);
 	for (ACube* singleCube : cubes) {
-		deadCubes.Enqueue(singleCube);
-		SetCubeAt(singleCube->PyramidPosition.X, singleCube->PyramidPosition.Y, nullptr);
-		singleCube->ExplodeCube();
+		//deadCubes.Enqueue(singleCube);
+		if (singleCube != nullptr) {
+			SetCubeAt(singleCube->PyramidPosition.X, singleCube->PyramidPosition.Y, nullptr);
+			singleCube->ExplodeCube();
+		}
 	}
 
 	RefreshCubesPositions();
@@ -254,6 +248,7 @@ uint32 APyramid::ExplodeCube(ACube* cube) {
 	return GoodFib(cubes.Num());
 }
 
+//Bad Fibonacci, bad
 //uint32 APyramid::Fib(uint32 x) {
 //	if (x == 0)
 //		return 0;
@@ -284,7 +279,6 @@ uint32 APyramid::GoodFib(uint16 x) {
 	}
 }
 
-
 void APyramid::SetHighlightGroup(ACube* cube, bool on) {
 	if (cube == nullptr)
 		return;
@@ -294,69 +288,38 @@ void APyramid::SetHighlightGroup(ACube* cube, bool on) {
 	}
 }
 
+//Should be called after deleting cubes, so that they can are st to the right position.
 void APyramid::RefreshCubesPositions() {
 
-	bIsAnyCubeAlive = false;
-
-	//if (GEngine)
-	//	GEngine->AddOnScreenDebugMessage(11, 3, FColor::Green, "Refreshing...");
-
-	//bool bHasToRefresh = true;
-	/*if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 2, FColor::White, "Hi");*/
-
-
-		//Check every position for cubes above it, and if it can fall, from the bottom to top
+	//Check every position for cubes above it, and if it can fall, from the bottom to top
 	for (uint8 y = 0; y < Height - 1; y++) {
 		for (uint8 x = 0; x < (Height - y) * 2 - 1; x++) {
 
 			FIntVector currentPos = FIntVector(x, y, 0);
 			FIntVector toDropPos = FIntVector(x + XDirection[Direction::N], y + YDirection[Direction::N], 0);
 
-
-			bIsAnyCubeAlive = bIsAnyCubeAlive || GetCubeAt(currentPos.X, currentPos.Y) != nullptr;
-
 			//is there a cube above And Empty here?
 			while (currentPos.Y >= 0 && !GetCubeAt(currentPos.X, currentPos.Y) && GetCubeAt(toDropPos.X, toDropPos.Y))
 			{
-				//ACube* RCube, * LCube;
-				//RCube = GetCubeAt(currentPos.X - 1, currentPos.Y);
-				//LCube = GetCubeAt(currentPos.X + 1, currentPos.Y);
-
-				//If R and L are null, we drop it and check again.
+				//If Cube at R and L are null, we drop it and check again.
 				if (!GetCubeAt(currentPos.X - 1, currentPos.Y) && !GetCubeAt(currentPos.X + 1, currentPos.Y)) {
-					/*if (GEngine)
-						GEngine->AddOnScreenDebugMessage(-1, 30, FColor::Blue, FString::Printf(TEXT("Setting Cube from [X: %i ; Y: %i] to [X: %i ; Y: %i]"), x - 1, y + 1, x, y));
-					*/
-					//Empty the previous cube position
+					//Re-place the cube position.
 					SetCubeAt(currentPos.X, currentPos.Y, GetCubeAt(toDropPos.X, toDropPos.Y));
+					//Empty the previous cube position
 					SetCubeAt(toDropPos.X, toDropPos.Y, nullptr);
 				}
-				//We drop
-				//And check again
 
+				//And check again lowering the positions
 				toDropPos = FIntVector(currentPos.X, currentPos.Y, 0);
 				currentPos = FIntVector(currentPos.X + XDirection[Direction::S], currentPos.Y + YDirection[Direction::S], 0);
 			}
-
-			//Old Top to bottom way
-
-			//ACube* cube, * SWCube, * SCube, * SECube;
-			//cube = cubesArray[GetPositionInArray(x, y)];
-			//if (cube != nullptr) {
-			//	SWCube = cubesArray[GetPositionInArray(x, y - 1)];
-			//	SCube = cubesArray[GetPositionInArray(x + 1, y - 1)];
-			//	SECube = cubesArray[GetPositionInArray(x + 2, y - 1)];
-
-			//	if (SWCube == nullptr && SCube == nullptr && SECube == nullptr) {
-			//		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Green, FString::Printf(TEXT("Setting Cube from [X: %i ; Y: %i] to [X: %i ; Y: %i]"), x, y, x + 1, y - 1));
-			//		cubesArray[GetPositionInArray(x, y)] = nullptr;
-			//		cubesArray[GetPositionInArray(x + 1, y - 1)] = cube;
-			//		cube->PyramidPosition.Set(x + 1, y - 1);
-
-			//	}
-			//}
 		}
+	}
+
+	bAnyCubeAlive = false;
+	for (ACube* sCube : CubesArray) {
+		//Is there ant cube left alive
+		bAnyCubeAlive = bAnyCubeAlive || (sCube != nullptr && sCube->bAlive);
 	}
 
 

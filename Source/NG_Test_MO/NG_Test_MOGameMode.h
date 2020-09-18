@@ -8,19 +8,25 @@
 #include "NG_Test_MOGameMode.generated.h"
 
 UCLASS(minimalapi)
-class ANG_Test_MOGameMode : public AGameMode
+class ANG_Test_MOGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
 	ANG_Test_MOGameMode();
 
-	bool bGameOver();
-	int AskExplodeCube(class ANG_Test_MOCharacter* player, class ACube* cube);
+	bool bGameOver;
+
+
 
 protected:
+	class AMyGameState* MyGameState;
+	
 	virtual void BeginPlay() override;
-	class APyramid* Pyramid;
+	virtual void Tick(float DeltaSeconds) override;
+	void GeneratePyramid();
+	bool IsGameOver();
+	
 
 };
 

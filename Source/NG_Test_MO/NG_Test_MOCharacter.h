@@ -152,6 +152,7 @@ protected:
 	void SetCubeImLookingAt(ACube* cube);
 	void CheckForCubes();
 	void ClickOnCube();
+	uint32 ExplodeCube(ACube* cube);
 
 public:
 	virtual void Tick(float DeltaTime) override;
