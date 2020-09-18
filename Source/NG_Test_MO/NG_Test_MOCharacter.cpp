@@ -14,6 +14,7 @@
 
 #include "Cube.h"
 #include "Pyramid.h"
+#include "GameFramework/PlayerState.h"
 #include "NG_Test_MOGameMode.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
@@ -107,6 +108,7 @@ void ANG_Test_MOCharacter::BeginPlay()
 		VR_Gun->SetHiddenInGame(true, true);
 		Mesh1P->SetHiddenInGame(false, true);
 	}
+
 }
 
 void ANG_Test_MOCharacter::Tick(float DeltaTime) {
@@ -146,26 +148,34 @@ void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
 	CubeImLookingAt = cube;
 	if (cube != nullptr) {
 		cube->AskSetHighlightGroup(true);
-		if (GEngine) {
+		/*if (GEngine) {
 			GEngine->AddOnScreenDebugMessage(10, 1, FColor::Black, FString::Printf(TEXT("Looking at Cube at X: %i ; Y: %i | Is data ok? %s"),
 				cube->PyramidPosition.X,
 				cube->PyramidPosition.Y,
 				(cube->Pyramid->GetCubeAt(cube->PyramidPosition.X, cube->PyramidPosition.Y) == cube ? TEXT("true") : TEXT("false"))));
-		}
+		}*/
 	}
 }
 
+//
+//uint32 ANG_Test_MOCharacter::GetScore() {
+//	return score;
+//}
+//void ANG_Test_MOCharacter::SetScore(uint32 newScore) {
+//	score = newScore;
+//}
+//uint32 ANG_Test_MOCharacter::AddScore(uint32 addScore) {
+//	return score += addScore;
+//}
 
 
 
 void ANG_Test_MOCharacter::ClickOnCube() {
 
 	if (CubeImLookingAt != nullptr) {
-		//TODO:
-		//save on score
-
-		GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt);
-		//CubeImLookingAt->AskExplodeCube();
+		//Score handling should be on GameMode. But this works for now.
+		auto player = GetPlayerState();
+		player->SetScore(player->GetScore() + (GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt)));
 	}
 }
 

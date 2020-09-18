@@ -28,6 +28,7 @@ private:
 	/** Crosshair asset pointer */
 	class UTexture2D* CrosshairTex;
 	class ANG_Test_MOGameMode* GameMode;
+	class ANG_Test_MOCharacter* player;
 
 
 

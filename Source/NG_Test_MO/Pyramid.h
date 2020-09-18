@@ -47,8 +47,8 @@ protected:
 	bool ISCoordinateWithinRange(int16 x, int16 y);
 	void RefreshCubesPositions();
 
-	uint16 Fib(uint16 x);
-	uint16 GoodFib(uint16 x);
+	//uint32 Fib(uint32 x);
+	uint32 GoodFib(uint16 x);
 
 public:
 	//Prolly should be private
@@ -69,8 +69,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	int ExplodeCube(uint8 x, uint8  y);
-	int ExplodeCube(ACube* cube);
+	uint32 ExplodeCube(uint8 x, uint8  y);
+	uint32 ExplodeCube(ACube* cube);
 	void SetHighlightGroup(ACube* cube, bool on);
 
 

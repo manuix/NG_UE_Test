@@ -31,8 +31,11 @@ void APyramid::BeginPlay()
 
 	GeneratePyramid();
 
-	/*if (GEngine)
-		GEngine->AddOnScreenDebugMessage(-1, 15, FColor::Emerald, FString::Printf(TEXT("%i"), GoodFib(9)));*/
+	if (GEngine) {
+
+		auto time = FDateTime::Now();
+		
+	}
 
 }
 
@@ -228,11 +231,11 @@ TSet<ACube*> APyramid::GetGroupCubes(ACube* cube) {
 
 }
 
-int APyramid::ExplodeCube(uint8 x, uint8 y) {
+uint32 APyramid::ExplodeCube(uint8 x, uint8 y) {
 	return ExplodeCube(GetCubeAt(x, y));
 }
 
-int APyramid::ExplodeCube(ACube* cube) {
+uint32 APyramid::ExplodeCube(ACube* cube) {
 	if (cube == nullptr)
 		return 0;
 
@@ -251,36 +254,34 @@ int APyramid::ExplodeCube(ACube* cube) {
 	return GoodFib(cubes.Num());
 }
 
-uint16 APyramid::Fib(uint16 x) {
-	if (x == 0)
+//uint32 APyramid::Fib(uint32 x) {
+//	if (x == 0)
+//		return 0;
+//	if (x == 1)
+//		return 1;
+//	return Fib(x - 1) + Fib(x - 2);
+//}
+
+uint32 APyramid::GoodFib(uint16 x) {
+	if (x == 0) {
 		return 0;
-	if (x == 1)
+	}
+	else if (x == 1) {
 		return 1;
-	return Fib(x - 1) + Fib(x - 2);
-}
-
-uint16 APyramid::GoodFib(uint16 x) {
-	uint16 a, b, i, save;
-	a = b = i = save = 0;
-
-	while (i < x) {
-
-		if (i == 0) {
-			a = 0;
-			b = 0;
-		}
-		else if (i == 1) {
-			a = 1;
-			b = 0;
-		}
-		else {
+	}
+	else {
+		double a, b, i, save;
+		a = b = i = save = 0;
+		a = 1;
+		i = 2;
+		while (i < x) {
 			save = a;
 			a = b + a;
 			b = save;
+			i++;
 		}
-		i++;
+		return a + b;
 	}
-	return a + b;
 }
 
 
