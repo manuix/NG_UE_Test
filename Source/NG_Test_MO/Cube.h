@@ -11,7 +11,6 @@ UCLASS()
 class NG_TEST_MO_API ACube : public AActor
 {
 	GENERATED_BODY()
-		//class UBoxComponent* BoxComp;
 
 
 public:
@@ -19,7 +18,7 @@ public:
 	ACube();
 
 	UPROPERTY(VisibleAnywhere, Category = "Mesh")
-		class UStaticMeshComponent* Mesh;
+	class UStaticMeshComponent* Mesh;
 
 	class APyramid* Pyramid;
 	
@@ -31,18 +30,14 @@ protected:
 	virtual void BeginPlay() override;
 	uint8 color;
 
-	//void SetColor(int)
-	//int8
-
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	void SetColor(uint8 newColor);
 	FORCEINLINE uint8 GetColor() { return color; }
 
-	void AskSetHighlightGroup(bool on);
 	void SetHighlight(bool on);
-	void Init();
+	void Spawn();
 	void ExplodeCube();
 	void AskExplodeCube();
 

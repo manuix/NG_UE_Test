@@ -146,9 +146,6 @@ public:
 protected:
 	class ACube* CubeImLookingAt;
 
-	//Just in case all cubes were a single color, we need a 32 bit integer. This shouldn't happen if we have a better generation algorythim
-	uint32 score;
-
 	void SetCubeImLookingAt(ACube* cube);
 	void CheckForCubes();
 	void ClickOnCube();
@@ -156,10 +153,6 @@ protected:
 
 public:
 	virtual void Tick(float DeltaTime) override;
-
-	//uint32 GetScore();
-	//void SetScore(uint32 score);
-	//uint32 AddScore(uint32 score);
 
 
 };

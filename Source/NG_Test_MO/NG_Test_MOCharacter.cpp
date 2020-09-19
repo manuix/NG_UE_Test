@@ -133,7 +133,7 @@ void ANG_Test_MOCharacter::CheckForCubes() {
 
 }
 
-void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
+void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* newCube) {
 	/*
 	Need to check whether:
 		- I was looking at a cube
@@ -142,26 +142,31 @@ void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
 		- If I'm looking at an existing cube, highlight it.
 	*/
 	if (CubeImLookingAt != nullptr) {
-		if (CubeImLookingAt != cube) {
-			CubeImLookingAt->AskSetHighlightGroup(false);
+		if (CubeImLookingAt != newCube) {
+			if (CubeImLookingAt->Pyramid) {
+				for (auto sCube : CubeImLookingAt->Pyramid->GetGroupCubes(CubeImLookingAt)) {
+					sCube->SetHighlight(false);
+				}
+			}
+			CubeImLookingAt->SetHighlight(false);
 		}
 	}
-	CubeImLookingAt = cube;
-	if (cube != nullptr) {
-		cube->AskSetHighlightGroup(true);
-		/*if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(10, 1, FColor::Black, FString::Printf(TEXT("Looking at Cube at X: %i ; Y: %i | Is data ok? %s"),
-				cube->PyramidPosition.X,
-				cube->PyramidPosition.Y,
-				(cube->Pyramid->GetCubeAt(cube->PyramidPosition.X, cube->PyramidPosition.Y) == cube ? TEXT("true") : TEXT("false"))));
-		}*/
+	CubeImLookingAt = newCube;
+	if (newCube != nullptr) {
+		if (newCube->Pyramid) {
+			for (auto sCube : newCube->Pyramid->GetGroupCubes(CubeImLookingAt)) {
+				sCube->SetHighlight(true);
+			}
+		}
+		newCube->SetHighlight(true);
 	}
 }
 
+//This looks for the pyramid in the game state and explodes a cube and all the same colored naighbours, returning the score this yields.
 uint32 ANG_Test_MOCharacter::ExplodeCube(ACube* cube) {
 	if (cube == nullptr)
 		return 0;
-	
+
 	auto gameState = GetWorld()->GetGameState<AMyGameState>();
 	return gameState->Pyramid->ExplodeCube(cube);
 

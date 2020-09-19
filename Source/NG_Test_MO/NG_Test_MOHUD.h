@@ -17,7 +17,6 @@ class ANG_Test_MOHUD : public AHUD
 public:
 	ANG_Test_MOHUD();
 
-
 	/** Primary draw call for the HUD */
 	virtual void DrawHUD() override;
 

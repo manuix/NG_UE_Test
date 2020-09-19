@@ -65,7 +65,6 @@ public:
 
 	void GeneratePyramid();
 
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

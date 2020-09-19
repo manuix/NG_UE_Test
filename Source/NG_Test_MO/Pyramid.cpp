@@ -60,7 +60,7 @@ void APyramid::GeneratePyramid() {
 			//Actualy Spawining it
 			if (cube != nullptr) {
 
-				cube->SetOwner(this);
+				//cube->SetOwner(this);
 				cube->SetActorLabel(FString::Printf(TEXT("Cube %i | %i"), x * 2, y));
 				cube->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 				cube->SetActorRelativeLocation(GetActorLocation() + FVector(0, 110 * x + 55 * y, 110 * y), false, nullptr, ETeleportType::ResetPhysics);
@@ -78,7 +78,7 @@ void APyramid::GeneratePyramid() {
 				//cube->SetColor(0);
 
 				cube->Pyramid = this;
-				cube->Init();
+				cube->Spawn();
 			}
 
 			CubesArray[PositionInArray] = cube;
@@ -152,6 +152,8 @@ const TArray<int8> XDirection = { -1,  0,  2,  2,  1,  0, -2, -2 };
 const TArray<int8> YDirection = { 1,  1,  0, -1, -1, -1,  0,  1 };
 enum Direction { N = 0, NE, E, SE, S, SW, W, NW };
 
+
+//Returns an array with the pointers to the sourrounding cubes
 TArray<ACube*> APyramid::GetTouchingCubes(uint8 x, uint8 y) {
 	TArray<ACube*>ret;
 	ret.SetNum(8);
@@ -166,16 +168,19 @@ TArray<ACube*> APyramid::GetTouchingCubes(uint8 x, uint8 y) {
 	return ret;
 }
 
+//Returns an array with the pointers to the sourrounding cubes
 TArray<ACube*> APyramid::GetTouchingCubes(ACube* cube) {
 	if (cube == nullptr)
 		return TArray<ACube*>();
 	return GetTouchingCubes(cube->PyramidPosition.X, cube->PyramidPosition.Y);
 }
 
+//Returns all the same colored neighbouring cubes
 TSet<ACube*> APyramid::GetGroupCubes(uint8 x, uint8 y) {
 	return GetGroupCubes(CubesArray[GetPositionInArray(x, y)]);
 }
 
+//Returns all the same colored neighbouring cubes
 TSet<ACube*> APyramid::GetGroupCubes(ACube* cube) {
 
 	TSet<ACube*> groupCubes;
@@ -223,10 +228,12 @@ TSet<ACube*> APyramid::GetGroupCubes(ACube* cube) {
 
 }
 
+//Explodes a cube and all the same colored neighbours. Returns the socre, which is taken from the fibonacci sequance.
 uint32 APyramid::ExplodeCube(uint8 x, uint8 y) {
 	return ExplodeCube(GetCubeAt(x, y));
 }
 
+//Explodes a cube and all the same colored neighbours. Returns the socre, which is taken from the fibonacci sequance.
 uint32 APyramid::ExplodeCube(ACube* cube) {
 	if (cube == nullptr)
 		return 0;

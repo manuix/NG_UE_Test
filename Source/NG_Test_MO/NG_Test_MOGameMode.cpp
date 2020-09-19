@@ -43,9 +43,6 @@ void ANG_Test_MOGameMode::BeginPlay() {
 void ANG_Test_MOGameMode::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 
-	if (GEngine)
-		GEngine->AddOnScreenDebugMessage(1234, 1, FColor::White, "Hi im the game mode ticking");
-
 	MyGameState->bGameOver = IsGameOver();
 }
 

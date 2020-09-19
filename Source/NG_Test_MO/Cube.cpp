@@ -57,25 +57,13 @@ void ACube::SetColor(uint8 newColor) {
 	Mesh->SetVectorParameterValueOnMaterials("Color", newColorVector);
 }
 
-/*ACube* ACube::getCube() {
-	return this;
-	return nullptr;
-}*/
-
-
-void ACube::AskSetHighlightGroup(bool on) {
-
-	Pyramid->SetHighlightGroup(this, on);
-
-}
 
 void ACube::SetHighlight(bool on) {
 	Mesh->SetScalarParameterValueOnMaterials("Highlight", on);
 }
 
 
-void ACube::Init() {
-
+void ACube::Spawn() {
 	bAlive = true;
 	Mesh->SetHiddenInGame(false);
 	Mesh->SetSimulatePhysics(true);
