@@ -12,11 +12,19 @@
 #include "MotionControllerComponent.h"
 #include "XRMotionControllerBase.h" // for FXRMotionControllerBase::RightHandSourceId
 
+#include "GameFramework/PlayerState.h"
+#include "Math/Color.h"
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/TextBlock.h"
+#include "Components/ListView.h"
+#include "Components/Border.h"
+
+#include "Styling/SlateColor.h"
+#include "NG_Test_MOGameMode.h"
+#include "MyGameState.h"
 #include "Cube.h"
 #include "Pyramid.h"
-#include "GameFramework/PlayerState.h"
-#include "NG_Test_MOGameMode.h"
-//#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
@@ -88,110 +96,11 @@ ANG_Test_MOCharacter::ANG_Test_MOCharacter()
 
 	// Uncomment the following line to turn motion controllers on by default:
 	//bUsingMotionControllers = true;
-
-
-	//bReplicates = true;
 	SetReplicates(true);
 	SetReplicateMovement(true);
 
-
 }
 
-void ANG_Test_MOCharacter::BeginPlay()
-{
-	// Call the base class  
-	Super::BeginPlay();
-
-	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
-	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
-
-	// Show or hide the two versions of the gun based on whether or not we're using motion controllers.
-	if (bUsingMotionControllers)
-	{
-		VR_Gun->SetHiddenInGame(false, true);
-		Mesh1P->SetHiddenInGame(true, true);
-	}
-	else
-	{
-		VR_Gun->SetHiddenInGame(true, true);
-		Mesh1P->SetHiddenInGame(false, true);
-	}
-
-}
-
-void ANG_Test_MOCharacter::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);
-	CheckForCubes();
-}
-
-void ANG_Test_MOCharacter::CheckForCubes() {
-
-	FHitResult THit;
-
-	FVector start = FirstPersonCameraComponent->GetComponentLocation();
-	FVector end = start + FirstPersonCameraComponent->GetForwardVector() * 10000;
-	FCollisionQueryParams CollisionParams;
-
-
-	GetWorld()->LineTraceSingleByChannel(THit, start, end, ECC_Visibility, CollisionParams);
-	// Am I looking at a cube?
-	ACube* hitCube = (Cast<ACube>(THit.Actor));
-	SetCubeImLookingAt(hitCube);
-
-}
-
-void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* cube) {
-	/*
-	Need to check whether:
-		- I was looking at a cube
-			- If it's the same, do nothing
-			- If it's differenct, remove the highlight and change the cube
-		- If I'm looking at an existing cube, highlight it.
-	*/
-	if (CubeImLookingAt != nullptr) {
-		if (CubeImLookingAt != cube) {
-			CubeImLookingAt->AskSetHighlightGroup(false);
-		}
-	}
-	CubeImLookingAt = cube;
-	if (cube != nullptr) {
-		cube->AskSetHighlightGroup(true);
-		/*if (GEngine) {
-			GEngine->AddOnScreenDebugMessage(10, 1, FColor::Black, FString::Printf(TEXT("Looking at Cube at X: %i ; Y: %i | Is data ok? %s"),
-				cube->PyramidPosition.X,
-				cube->PyramidPosition.Y,
-				(cube->Pyramid->GetCubeAt(cube->PyramidPosition.X, cube->PyramidPosition.Y) == cube ? TEXT("true") : TEXT("false"))));
-		}*/
-	}
-}
-
-//
-//uint32 ANG_Test_MOCharacter::GetScore() {
-//	return score;
-//}
-//void ANG_Test_MOCharacter::SetScore(uint32 newScore) {
-//	score = newScore;
-//}
-//uint32 ANG_Test_MOCharacter::AddScore(uint32 addScore) {
-//	return score += addScore;
-//}
-
-
-bool ANG_Test_MOCharacter::Server_AskClickOnCube_Validate(ACube* cube) {
-	return true;
-}
-void ANG_Test_MOCharacter::Server_AskClickOnCube_Implementation(ACube* cube) {
-	
-}
-
-void ANG_Test_MOCharacter::ClickOnCube() {
-
-	if (CubeImLookingAt != nullptr) {
-		//Score handling should be on GameMode. But this works for now.
-		Server_AskClickOnCube(CubeImLookingAt);
-		//GetPlayerState()->SetScore(GetPlayerState()->GetScore() + (GetWorld()->GetAuthGameMode<ANG_Test_MOGameMode>()->AskExplodeCube(this, CubeImLookingAt)));
-	}
-}
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -208,6 +117,8 @@ void ANG_Test_MOCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 	// Bind fire event
 	//PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ANG_Test_MOCharacter::OnFire);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ANG_Test_MOCharacter::ClickOnCube);
+	//Debug cube
+	//PlayerInputComponent->BindAction("Fire2", IE_Pressed, this, &ANG_Test_MOCharacter::DebugCube);
 
 	// Enable touchscreen input
 	EnableTouchscreenMovement(PlayerInputComponent);
@@ -386,4 +297,151 @@ bool ANG_Test_MOCharacter::EnableTouchscreenMovement(class UInputComponent* Play
 	}
 
 	return false;
+}
+
+
+
+void ANG_Test_MOCharacter::BeginPlay()
+{
+
+	// Call the base class  
+	Super::BeginPlay();
+
+	//Attach gun mesh component to Skeleton, doing it here because the skeleton is not yet created in the constructor
+	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
+
+	// Show or hide the two versions of the gun based on whether or not we're using motion controllers.
+	if (bUsingMotionControllers)
+	{
+		VR_Gun->SetHiddenInGame(false, true);
+		Mesh1P->SetHiddenInGame(true, true);
+	}
+	else
+	{
+		VR_Gun->SetHiddenInGame(true, true);
+		Mesh1P->SetHiddenInGame(false, true);
+	}
+
+
+}
+
+
+
+void ANG_Test_MOCharacter::Tick(float DeltaSeconds) {
+	Super::Tick(DeltaSeconds);
+
+	if (IsLocallyControlled()) {
+		CheckForCubes();
+	}
+}
+
+
+
+void ANG_Test_MOCharacter::CheckForCubes() {
+	FHitResult THit;
+
+	FVector start = FirstPersonCameraComponent->GetComponentLocation();
+	FVector end = start + FirstPersonCameraComponent->GetForwardVector() * 10000;
+	FCollisionQueryParams CollisionParams;
+
+
+	GetWorld()->LineTraceSingleByChannel(THit, start, end, ECC_Visibility, CollisionParams);
+	// Am I looking at a cube?
+	ACube* hitCube = (Cast<ACube>(THit.Actor));
+	SetCubeImLookingAt(hitCube);
+}
+
+void ANG_Test_MOCharacter::SetCubeImLookingAt(ACube* newCube) {
+	/*
+	* We turn off the highlight on any currently looked at cube
+	* Then we turn it on on any cube that we might be lookign at now.
+	*/
+	if (CubeImLookingAt != nullptr) {
+		if (CubeImLookingAt != newCube) {
+			if (CubeImLookingAt->Pyramid) {
+				for (auto sCube : CubeImLookingAt->Pyramid->GetGroupCubes(CubeImLookingAt)) {
+					sCube->SetHighlight(false);
+				}
+			}
+			CubeImLookingAt->SetHighlight(false);
+		}
+	}
+
+	CubeImLookingAt = newCube;
+	if (newCube != nullptr) {
+		if (newCube->Pyramid) {
+			for (auto sCube : newCube->Pyramid->GetGroupCubes(CubeImLookingAt)) {
+				sCube->SetHighlight(true);
+			}
+		}
+		newCube->SetHighlight(true);
+	}
+}
+
+//If someone tries to destroy a cube whtn it's not their turn, should it disconnect them? not so sure. 
+//The server just checks if it's their turn and then explodes it or not accordingly
+bool ANG_Test_MOCharacter::Server_AskClickOnCube_Validate(APlayerController* pController, ACube* cube) {
+	return true;
+}
+
+//TODO: Move this to the GameMode? IDK. this runs only on the server, but I get the feeling that if placed in the gamemode script the code would look more neat.
+void ANG_Test_MOCharacter::Server_AskClickOnCube_Implementation(APlayerController* pController, ACube* cube) {
+
+	auto gameState = GetWorld()->GetGameState<AMyGameState>();
+
+	//Checking it's my turn, otherwise, do nothing.
+	if (gameState->CurrentTurn != pController->GetPlayerState<APlayerState>()) {
+		return;
+	}
+
+	//Explode the cube and add the score they get.
+	auto score = cube->Pyramid->ExplodeCube(cube);
+	if (pController != nullptr && pController->PlayerState != nullptr)
+		pController->PlayerState->SetScore(pController->PlayerState->GetScore() + score);
+
+	gameState->SetNextTurn();
+}
+
+void ANG_Test_MOCharacter::ClickOnCube() {
+	if (CubeImLookingAt != nullptr) {
+		auto gs = GetWorld()->GetGameState<AMyGameState>();
+		if (gs && gs->CurrentTurn == GetPlayerState()) {
+			Server_AskClickOnCube((APlayerController*)Controller, CubeImLookingAt);
+		}
+	}
+}
+
+//Array with the direction names for debugging
+const TArray<FString> DirectionNames = { ("N"), ("NE"),  ("E"), ("SE"),  ("S"), ("SW"),  ("W"), ("NW") };
+void ANG_Test_MOCharacter::DebugCube() {
+	if (CubeImLookingAt != nullptr) {
+		auto cubes = CubeImLookingAt->Pyramid->GetTouchingCubes(CubeImLookingAt);
+		for (uint8 i = 0; i < 8; i++) {
+			if (GEngine) {
+
+				if (cubes[i]) {
+					FString colorName = ("");
+					//Should be Soft-coded (Des hardcodear)
+					switch (cubes[i]->GetColor())
+					{
+					case 0:
+						colorName = ("Red");
+						break;
+					case 1:
+						colorName = ("Green");
+						break;
+					case 2:
+						colorName = ("Blue");
+						break;
+					default:
+						break;
+					}
+					GEngine->AddOnScreenDebugMessage(50 + i, 20, FColor::Yellow, FString::Printf(TEXT("Cube at %s is %s"), *DirectionNames[i], *colorName));
+				}
+				else {
+					GEngine->AddOnScreenDebugMessage(50 + i, 20, FColor::Orange, FString::Printf(TEXT("No Cube at %s"), *DirectionNames[i]));
+				}
+			}
+		}
+	}
 }

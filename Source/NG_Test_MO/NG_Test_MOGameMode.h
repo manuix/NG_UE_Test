@@ -15,16 +15,31 @@ class ANG_Test_MOGameMode : public AGameMode
 public:
 	ANG_Test_MOGameMode();
 
-	bool bGameOver();
-	int AskExplodeCube(class ANG_Test_MOCharacter* player, class ACube* cube);
+	bool bGameOver;
+
+	//To be called when any client notifies the server that they set up the pyramid on their gamestate.
+	void CheckClientsWithPyramidCount();
+	void CheckClientsWithNameSet(class AMyPlayerController* controllerWithNewName);
+	//Is the game over. Checked after destroying a cube.
+	bool IsGameOver();
+
 
 protected:
-	virtual void BeginPlay() override;
-	class TSubclassOf<class APyramid> BPPyramid;
+	//Saving casted reference
+	class AMyGameState* MyGameState;
 
+	virtual void BeginPlay() override;
+
+	virtual AActor* ChoosePlayerStart_Implementation(AController* player) override;
+	//Generates the pyramid!
 	void GeneratePyramid();
 
+	virtual bool ReadyToStartMatch_Implementation() override;
+	virtual void HandleMatchHasStarted() override;
+	virtual bool ReadyToEndMatch_Implementation() override;
+
+	//Some names
+	TArray<FString> Names{ "Carlos", "Juan", "Manuel", "Nicolas" };
+
 };
-
-
 

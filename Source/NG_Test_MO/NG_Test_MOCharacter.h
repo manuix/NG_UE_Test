@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 
-//#include "Net/UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
+#include "NG_Test_MOGameMode.h"
 
 #include "NG_Test_MOCharacter.generated.h"
 
@@ -147,25 +148,24 @@ public:
 
 
 protected:
+	//The cube the caracter is aminig at
 	class ACube* CubeImLookingAt;
 
-	//Just in case all cubes were a single color, we need a 32 bit integer. This shouldn't happen if we have a better generation algorythim
-	uint32 score;
-
+	//Sets the CubeImLookingAt. This sets the highlight on it and it's group of cubes.
 	void SetCubeImLookingAt(ACube* cube);
+	//Throws a raycast forward an filter for cubes
 	void CheckForCubes();
+	//Tries to destroy the cube I'm Looking at
 	void ClickOnCube();
 
 	UFUNCTION(Server, unreliable, WithValidation)
-	void Server_AskClickOnCube(ACube* cube);
+	void Server_AskClickOnCube(APlayerController* pController, ACube* cube);
+
+
+	void DebugCube();
 
 public:
-	virtual void Tick(float DeltaTime) override;
-
-	//uint32 GetScore();
-	//void SetScore(uint32 score);
-	//uint32 AddScore(uint32 score);
-
+	virtual void Tick(float DeltaSeconds) override;
 
 };
 
